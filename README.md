@@ -1,14 +1,15 @@
 # 차선인식 프로젝트
+프로그래머스 자율주행 부트캠프에서 진행한 온라인 차선인식 프로젝트입니다. 
+프로젝트에서 사용된 영상은 [해당 링크][googlelink]에서 다운받으실 수 있습니다.
+
+[googlelink]: https://drive.google.com/file/d/1BJQPwU5P9RcRYol-Z0rwxvYX3FMbuzpr/view?usp=share_link "Go google"
+
 <aside>
 팀명 : unbreako
 
 팀원 : 송원석, 한지호
 
 </aside>
-프로그래머스 자율주행 부트캠프에서 진행한 온라인 차선인식 프로젝트입니다. 
-프로젝트에서 사용된 영상은 [해당 링크][googlelink]에서 다운받으실 수 있습니다.
-
-[googlelink]: https://drive.google.com/file/d/1BJQPwU5P9RcRYol-Z0rwxvYX3FMbuzpr/view?usp=share_link "Go google"
 
 
 # 프로젝트 기획
