@@ -2,10 +2,6 @@
 #include "houghlines.h"
 
 
-Houghline::Houghline() {}
-Houghline::~Houghline() {}
-
-
 void Houghline::DivideLeftRight(const Line& all_lines, Line& left_lines, Line& right_lines)
 {
     std::vector<float> slopes;
@@ -34,7 +30,7 @@ void Houghline::DivideLeftRight(const Line& all_lines, Line& left_lines, Line& r
         slope = slopes[i];
         x1 = new_line[0], x2 = new_line[2];
         y1 = new_line[1], y2 = new_line[3];
-        float x_mean = (x1 + x2) / 2;
+        float x_mean = float(x1 + x2) / 2;
         if (slope < 0 && x2 < WIDTH / 2 && 
             (abs(pre_left - x_mean) < 20 || pre_left == 0))
         {
