@@ -1,6 +1,6 @@
 lpos, rpos = [0], [0]
 
-with open('test.csv') as f:
+with open('data.csv') as f:
     lines = f.readlines()
     for i, line in enumerate(lines):
         if i%30 == 29:
@@ -8,7 +8,7 @@ with open('test.csv') as f:
             lpos.append(left)
             rpos.append(right)
 
-with open('pos.csv') as f:
+with open('answer.csv') as f:
     lines = f.readlines()
     size = len(lines)
     count = 0
