@@ -38,23 +38,11 @@ int main(int argc, char** argv)
         waitKey(1);
     }
     ofstream outfile;
-    //lpos rpos값을 저장할 csv파일 open
-    outfile.open("test.csv", ios::out);
-    //csv파일에 저장
+    outfile.open("data.csv", ios::out);
     for (int j = 0; j < line.size(); j++)
     {
         outfile << line[j].first << "," << line[j].second << endl;
     }
     outfile.close();
-    // 콘솔에서 csv에 입력된 값 출력하기(확인용)
-    /*
-    string str;
-    ifstream input("test.csv");
-    while (!input.eof()) {
-        getline(input, str);
-        cout << str << endl;
-    }
-    input.close();
-    */
     return 0;
 }
