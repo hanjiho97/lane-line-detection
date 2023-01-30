@@ -12,6 +12,7 @@ constexpr uint16_t HALF_HEIGHT = 240U;
 constexpr uint16_t OFFSET = 385U;
 constexpr uint16_t GAP = 30U;
 constexpr uint16_t HALF_GAP = 15U;
+constexpr uint16_t LANE_HEIGHT = 400U;
 }
 
 struct LinePositions
@@ -37,13 +38,13 @@ public:
     const std::vector<cv::Vec4i>& lines,
     float& slope, float& y_intercept);
 	cv::Mat preprocess_Image(cv::Mat& input_frame);
-  LinePosition get_LinePositions(const cv::Mat& output_frame);
-  void draw_Lines(cv::Mat& frame, LinePosition& line_positions);
+  void get_LinePositions(const cv::Mat& output_frame);
+  void draw_Points(cv::Mat& frame, LinePosition& line_positions);
 
 private:
 	void get_LinePosition(
 		const std::vector<cv::Vec4i>& lines,
-    bool is_left, float& line_x1, float& line_x2, int32_t& line_position);
+    bool is_left, float& line_x1, float& line_x2, uint16_t& line_position);
   constexpr uint16_t MAX_LINE_SIZE = 64U;
 	uint16_t previous_left_ = 0U;
   uint16_t previous_right_ = frame::WIDTH;

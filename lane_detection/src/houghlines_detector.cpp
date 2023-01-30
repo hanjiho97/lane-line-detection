@@ -122,7 +122,7 @@ bool Houghline_Detector::get_LineParams(
 
 void Houghline_Detector::get_LinePosition(
   const std::vector<cv::Vec4i>& lines,
-  bool is_left, float& line_x1, float& line_x2, int32_t& line_position)
+  bool is_left, int32_t& line_position)
 {
     float slope = 0.0F;
     float y_intercept = 0.0F;
@@ -139,63 +139,64 @@ void Houghline_Detector::get_LinePosition(
     }
     else
     {
-      line_pos = static_cast<int32_t>((frame::HALF_GAP - y_intercept) / slope);
-      y_intercept += static_cast<float>(frame::OFFSET);
-      line_x1 = (static_cast<float>(frame::HEIGHT) - y_intercept) / slope;
-      line_x2 = (static_cast<float>(frame::HALF_HEIGHT) - y_intercept) / slope;
+      line_position = static_cast<int32_t>((frame::HALF_GAP - y_intercept) / slope);
     }
 }
 
-
 cv::Mat Houghline_Detector::preprocess_Image(const cv::Mat& input_frame)
 {
-    double global_min = 255.0;
-    double global_gmax = 0.0;
-    cv::Mat gray_img;
-    cvtColor(frame, gray_img, cv::COLOR_BGR2GRAY);
-    cv::minMaxLoc(gray_img, &global_min, &global_gmax);
-    cv::Mat strech_img;
-    strech_img = (gray_img - global_min) * 255 / (global_gmax - global_min);
-    cv::Mat blur_img;
-    cv::GaussianBlur(strech_img, blur_img, cv::Size(5, 5), 1.5);
-    cv::Mat edge_img;
-    cv::Canny(blur_img, edge_img, 100, 200);
-    cv::bitwise_and(edge_img, mask_img, masked_img);
-    dilate(masked_img, masked_img, cv::Mat());
-    cv::Mat roi;
-    roi = masked_img(cv::Range(OFFSET, OFFSET + GAP), cv::Range(0, WIDTH));
-    std::vector<cv::Vec4i> all_lines;
-    std::vector<cv::Vec4i> left_lines;
-    std::vector<cv::Vec4i> right_lines;
-    HoughLinesP(roi, all_lines, 1, (CV_PI / 180.0), 30, 12.5, 5);
-    if (all_lines.size() == 0U)
-    {
-      LinePositions.left_line_position = 0;
-      LinePositions.right_line_position = 640;
-    }
-    else
-    {
-      DivideLeftRight(all_lines, left_lines, right_lines);
-      // get center of lines
-      float left_x1 = 0.0F;
-      float left_x2 = 0.0F;
-      float right_x1 = static_cast<float>(frame::WIDTH);
-      float right_x2 = static_cast<float>(frame::WIDTH);
-      int32_t left_position = 0;
-      int32_t right_position = WIDTH;
-      get_LinePosition(left_lines, true, left_x1, left_x2, left_position);
-      get_LinePosition(right_lines, false, right_x1, right_x2, right_position);
-      line(frame,
-        cv::Point(static_cast<int32_t>(left_x1), frame::HEIGHT),
-        cv::Point(static_cast<int32_t>(left_x2), frame::HALF_HEIGHT),
-        cv::Scalar(255, 0, 0), 3);
-      line(frame,
-        cv::Point(static_cast<int32_t>(right_x1), frame::HEIGHT),
-        cv::Point(static_cast<int32_t>(right_x2), frame::HALF_HEIGHT),
-        cv::Scalar(255, 0, 0), 3);
-      LinePositions.left_line_position = left_position;
-      LinePositions.right_line_position = right_position;
-      previous_left_ = left_pos;
-      previous_right_ = right_position;
-    }
+  double global_min = 255.0;
+  double global_gmax = 0.0;
+  cv::Mat gray_img;
+  cvtColor(input_frame, gray_img, cv::COLOR_BGR2GRAY);
+  cv::minMaxLoc(gray_img, &global_min, &global_gmax);
+  cv::Mat strech_img;
+  strech_img = (gray_img - global_min) * 255 / (global_gmax - global_min);
+  cv::Mat blur_img;
+  cv::GaussianBlur(strech_img, blur_img, cv::Size(5, 5), 1.5);
+  cv::Mat edge_img;
+  cv::Canny(blur_img, edge_img, 100, 200);
+  cv::bitwise_and(edge_img, mask_img, masked_img);
+  dilate(masked_img, masked_img, cv::Mat());
+  cv::Mat roi;
+  roi = masked_img(cv::Range(OFFSET, OFFSET + GAP), cv::Range(0, WIDTH));
+  return roi;
+}
+
+void Houghline_Detector::get_LinePositions(const cv::Mat& output_frame, LinePositions& lane)
+{
+  std::vector<cv::Vec4i> all_lines;
+  std::vector<cv::Vec4i> left_lines;
+  std::vector<cv::Vec4i> right_lines;
+  HoughLinesP(output_frame, all_lines, 1, (CV_PI / 180.0), 30, 12.5, 5);
+  if (all_lines.size() == 0U)
+  {
+    lane.left_line_position = 0;
+    lane.right_line_position = 640;
+  }
+  else
+  {
+    DivideLeftRight(all_lines, left_lines, right_lines);
+    // get center of lines
+    uint16_t left_position = 0U;
+    uint16_t right_position = frame::WIDTH;
+    get_LinePosition(left_lines, true, left_position);
+    get_LinePosition(right_lines, false, right_position);
+    lane.left_line_position = left_position;
+    lane.right_line_position = right_position;
+    previous_left_ = left_position;
+    previous_right_ = right_position;
+  }
+}
+
+void Houghline_Detector::draw_Points(cv::Mat& input_frame, LinePosition& lane)
+{
+  line(input_frame,
+  cv::Point(lane.left_line_position, frame::LANE_HEIGHT),
+  cv::Point(lane.left_line_position, frame::LANE_HEIGHT),
+  cv::Scalar(255, 0, 0), 7, cv::LINE_AA);
+  line(input_frame,
+  cv::Point(lane.right_line_position, frame::LANE_HEIGHT),
+  cv::Point(lane.right_line_position, frame::LANE_HEIGHT),
+  cv::Scalar(255, 0, 0), 7, cv::LINE_AA);
 }
