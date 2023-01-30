@@ -1,47 +1,70 @@
 #include <cmath>
 #include "lane_detection/houghlines_detector.hpp"
 
-
-void Houghline_Detector::DivideLeftRight(const Line& all_lines, Line& left_lines, Line& right_lines)
+void Houghline_Detector::divide_LeftRight(
+  const std::vector<cv::Vec4i>& all_lines,
+  std::vector<cv::Vec4i>& left_lines,
+  std::vector<cv::Vec4i>& right_lines)
 {
-    std::vector<float> slopes;
-    Line new_lines;
-    int x1 = 0, x2 = 0;
-    int y1 = 0, y2 = 0;
-    float slope = 0;
-    //line filitering by slope
-    for (auto& line : all_lines) {
-        x1 = line[0], x2 = line[2];
-        y1 = line[1], y2 = line[3];
-        if (x2 - x1 == 0) {
-            slope = 0;
-        }
-        else {
-            slope = float(y2 - y1) / float(x2 - x1);
-        }
-        if (0 < abs(slope)) {
-            slopes.push_back(slope);
-            new_lines.push_back(line);
-        }
+  std::vector<float> slopes;
+  slopes.reserve(MAX_LINE_SIZE);
+  std::vector<cv::Vec4i> new_lines;
+  new_lines.reserve(MAX_LINE_SIZE);
+  uint16_t x1 = 0U;
+  uint16_t x2 = 0U;
+  uint16_t y1 = 0U;
+  uint16_t y2 = 0U;
+  float slope = 0.0F;
+  filter_out_lines(all_lines, slopes, new_lines);
+  //split left line and right line
+  for (uint32_t i = 0U; i < slopes.size(); ++i)
+  {
+    cv::Vec4i new_line = new_lines[i];
+    slope = slopes[i];
+    x1 = new_line[0];
+    x2 = new_line[2];
+    y1 = new_line[1];
+    y2 = new_line[3];
+    float x_mean = static_cast<float>(x1 + x2) / 2.0F;
+    if ((slope < 0.0F) && (x2 < (frame::WIDTH / 2)) &&
+        ((std::abs(previous_left_ - x_mean) < 20) || (previous_left_ == 0)))
+    {
+        left_lines.push_back(new_line);
     }
-    //split left line and right line
-    for (int i = 0; i < slopes.size(); i++) {
-        cv::Vec4i new_line = new_lines[i];
-        slope = slopes[i];
-        x1 = new_line[0], x2 = new_line[2];
-        y1 = new_line[1], y2 = new_line[3];
-        float x_mean = float(x1 + x2) / 2;
-        if (slope < 0 && x2 < WIDTH / 2 &&
-            (abs(pre_left - x_mean) < 20 || pre_left == 0))
-        {
-            left_lines.push_back(new_line);
-        }
-        else if (slope > 0 && x1 > WIDTH / 2 &&
-            (abs(pre_right - x_mean) < 20 || pre_right == WIDTH))
-        {
-            right_lines.push_back(new_line);
-        }
+    else if ((slope > 0.0F) && (x1 > (frame::WIDTH / 2)) &&
+        ((std::abs(previous_right_ - x_mean) < 20) || (previous_right_ == WIDTH)))
+    {
+        right_lines.push_back(new_line);
     }
+  }
+}
+
+void Houghline_Detector::filter_out_lines(
+  const std::vector<cv::Vec4i>& all_lines,
+  std::vector<float> slopes,
+  std::vector<cv::Vec4i> new_lines)
+{
+  //line filitering by slope
+  for (auto& line : all_lines)
+  {
+    x1 = line[0];
+    x2 = line[2];
+    y1 = line[1];
+    y2 = line[3];
+    if ((x2 - x1) == 0)
+    {
+      slope = 0.0F;
+    }
+    else
+    {
+      slope = static_cast<float>(y2 - y1) / static_cast<float>(x2 - x1);
+    }
+    if (0.0 < std::abs(slope))
+    {
+      slopes.push_back(slope);
+      new_lines.push_back(line);
+    }
+  }
 }
 
 
