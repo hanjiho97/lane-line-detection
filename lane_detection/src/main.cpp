@@ -4,44 +4,43 @@
 #include "houghlines.h"
 
 
-using namespace std;
-using namespace cv;
-
-
-int main(int argc, char** argv)
+int32_t main(int32_t argc, char** argv)
 {
-    Houghline hough;
-    pair<int, int> temp;
-    vector<pair<int, int>> line;
-    VideoCapture cap;
+    Houghline_Detector houghline_detector;
+    std::pair<int, int> current_line;
+    std::vector<std::pair<int, int>> lines;
+    cv::VideoCapture cap;
     cap.open("Sub_project.avi");
     if (!cap.isOpened())
     {
-        cerr << "Video open failed!\n";
+        std::cerr << "Video open failed!" << std::endl;
         exit(1);
     }
-    Mat frame;
-    namedWindow("frame");
-    while (true)
+    cv::Mat input_frame;
+    cv::Mat output_frame;
+    LinePositions lane;
+    cv::namedWindow("frame");
+    while(true)
     {
-        if (!cap.read(frame))
+        if (!cap.read(input_frame))
         {
-            cout << "Video end!\n";
+            std::cout << "Video end!" << std::endl;
             break;
         }
-        int pos[2] = { -1, -1 };
-        hough.ProcessImage(frame, pos);
-        temp.first = pos[0];
-        temp.second = pos[1];
-        line.push_back(temp);
-        imshow("frame", frame);
+        output_frame = houghline_detector.preprocess_Image(input_frame);
+        houghline_detector.get_LinePositions(output_frame, lane);
+        houghline_detector.draw_Points(input_frame, lane);
+        current_line.first = lane.left_line_position;
+        current_line.second = lane.right_line_position;
+        lines.push_back(current_line);
+        imshow("input_frame", input_frame);
         waitKey(1);
     }
     ofstream outfile;
     outfile.open("data.csv", ios::out);
-    for (int j = 0; j < line.size(); j++)
+    for (uint32_t j = 0; j < line.size(); ++j)
     {
-        outfile << line[j].first << "," << line[j].second << endl;
+        outfile << line[j].first << "," << line[j].second << std::endl;
     }
     outfile.close();
     return 0;
