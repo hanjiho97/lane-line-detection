@@ -1,9 +1,8 @@
 #include <cmath>
-#include <vector>
-#include "houghlines.h"
+#include "lane_detection/houghlines_detector.hpp"
 
 
-void Houghline::DivideLeftRight(const Line& all_lines, Line& left_lines, Line& right_lines)
+void Houghline_Detector::DivideLeftRight(const Line& all_lines, Line& left_lines, Line& right_lines)
 {
     std::vector<float> slopes;
     Line new_lines;
@@ -46,7 +45,7 @@ void Houghline::DivideLeftRight(const Line& all_lines, Line& left_lines, Line& r
 }
 
 
-void Houghline::GetLineParams(const Line& lines, float& m, float& b) {
+void Houghline_Detector::GetLineParams(const Line& lines, float& slope, float& y_intercept) {
     float x_sum = 0.0, y_sum = 0.0, m_sum = 0.0;
     int x1, y1, x2, y2;
     int size = lines.size();
@@ -68,7 +67,7 @@ void Houghline::GetLineParams(const Line& lines, float& m, float& b) {
 }
 
 
-void Houghline::GetLinePosition(const Line& lines, bool is_left, float& line_x1, float& line_x2, int& line_pos) {
+void Houghline_Detector::GetLinePosition(const Line& lines, bool is_left, float& line_x1, float& line_x2, int& line_pos) {
     float m = 0, b = 0;
     int y = GAP / 2;
     GetLineParams(lines, m, b);
@@ -90,7 +89,7 @@ void Houghline::GetLinePosition(const Line& lines, bool is_left, float& line_x1,
 }
 
 
-void Houghline::ProcessImage(const cv::Mat& frame, int pos[]) {
+void Houghline_Detector::ProcessImage(const cv::Mat& frame, int pos[]) {
     double global_min = 255, global_gmax = 0;
     cv::Mat mask_img, gray_img, strech_img, blur_img, edge_img, masked_img;
     cv::Mat roi;
