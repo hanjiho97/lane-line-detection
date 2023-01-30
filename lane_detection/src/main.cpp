@@ -7,8 +7,9 @@
 int32_t main(int32_t argc, char** argv)
 {
     Houghline_Detector houghline_detector;
-    std::pair<int, int> current_line;
-    std::vector<std::pair<int, int>> lines;
+    std::pair<uint16_t, uint16_t> current_line;
+    std::vector<std::pair<uint16_t, uint16_t>> lines;
+    lines.reserve(size::MAX_LINE_POSITION_SIZE);
     cv::VideoCapture cap;
     cap.open("Sub_project.avi");
     if (!cap.isOpened())

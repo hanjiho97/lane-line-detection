@@ -2,12 +2,17 @@
 
 Houghline_Detector::Houghline_Detector()
 {
-    mask_image = cv::imread("mask.png", cv::IMREAD_GRAYSCALE);
-    if (mask_image.empty())
-    {
-        std::cerr << "Mask image load failed!" << std::endl;
-        exit(1);
-    }
+  weights_.reserve(size::MAX_SAMPLING_SIZE);
+  for (uint16_t i=1U; i<=size::MAX_SAMPLING_SIZE; ++i)
+  {
+    weights_.push_back(i*i);
+  }
+  mask_image_ = cv::imread("mask.png", cv::IMREAD_GRAYSCALE);
+  if (mask_image_.empty())
+  {
+      std::cerr << "Mask image load failed!" << std::endl;
+      exit(1);
+  }
 }
 
 void Houghline_Detector::divide_LeftRight(
@@ -16,9 +21,9 @@ void Houghline_Detector::divide_LeftRight(
     std::vector<cv::Vec4i>& right_lines)
 {
     std::vector<float> slopes;
-    slopes.reserve(MAX_LINE_SIZE);
+    slopes.reserve(size::MAX_LINE_SIZE);
     std::vector<cv::Vec4i> new_lines;
-    new_lines.reserve(MAX_LINE_SIZE);
+    new_lines.reserve(size::MAX_LINE_SIZE);
     uint16_t x1 = 0U;
     uint16_t x2 = 0U;
     uint16_t y1 = 0U;
@@ -36,12 +41,12 @@ void Houghline_Detector::divide_LeftRight(
         y2 = new_line[3];
         float x_mean = static_cast<float>(x1 + x2) / 2.0F;
         if ((slope < 0.0F) && (x2 < frame::HALF_WIDTH) &&
-            ((std::abs(previous_left_ - x_mean) < 20) || (previous_left_ == 0)))
+            ((std::abs(left_mean_ - x_mean) < 70) || (left_mean_ == 0)))
         {
             left_lines.push_back(new_line);
         }
         else if ((slope > 0.0F) && (x1 > frame::HALF_WIDTH) &&
-            ((std::abs(previous_right_ - x_mean) < 20) || (previous_right_ == frame::WIDTH)))
+            ((std::abs(right_mean_ - x_mean) < 70) || (right_mean_ == frame::WIDTH)))
         {
             right_lines.push_back(new_line);
         }
@@ -155,7 +160,7 @@ cv::Mat Houghline_Detector::preprocess_Image(const cv::Mat& input_frame)
     cv::Mat edge_image;
     cv::Canny(blur_image, edge_image, 100, 200);
     cv::Mat masked_image;
-    cv::bitwise_and(edge_image, mask_image, masked_image);
+    cv::bitwise_and(edge_image, mask_image_, masked_image);
     dilate(masked_image, masked_image, cv::Mat());
     cv::Mat roi;
     roi = masked_image(cv::Range(frame::OFFSET, frame::OFFSET + frame::GAP), cv::Range(0, frame::WIDTH));
@@ -165,8 +170,11 @@ cv::Mat Houghline_Detector::preprocess_Image(const cv::Mat& input_frame)
 void Houghline_Detector::get_LinePositions(const cv::Mat& output_frame, LinePositions& lane)
 {
     std::vector<cv::Vec4i> all_lines;
+    all_lines.reserve(size::MAX_LINE_SIZE);
     std::vector<cv::Vec4i> left_lines;
+    left_lines.reserve(size::MAX_LINE_SIZE);
     std::vector<cv::Vec4i> right_lines;
+    right_lines.reserve(size::MAX_LINE_SIZE);
     HoughLinesP(output_frame, all_lines, 1, (CV_PI / 180.0), 30, 12.5, 5);
     if (all_lines.size() == 0U)
     {
@@ -183,8 +191,24 @@ void Houghline_Detector::get_LinePositions(const cv::Mat& output_frame, LinePosi
         get_LinePosition(right_lines, false, right_position);
         lane.left_line_position = left_position;
         lane.right_line_position = right_position;
-        previous_left_ = left_position;
-        previous_right_ = right_position;
+        if (left_position == 0U)
+        {
+          left_samples_.clear();
+        }
+        else
+        {
+          add_left_sample(left_position);
+        }
+        if (right_position == frame::WIDTH)
+        {
+          right_samples_.clear();
+        }
+        else
+        {
+          add_right_sample(right_position);
+        }
+        get_left_weighted_mean();
+        get_right_weighted_mean();
     }
 }
 
@@ -198,4 +222,60 @@ void Houghline_Detector::draw_Points(cv::Mat& input_frame, LinePositions& lane)
         cv::Point(lane.right_line_position, frame::LANE_HEIGHT),
         cv::Point(lane.right_line_position, frame::LANE_HEIGHT),
         cv::Scalar(255, 0, 0), 7, cv::LINE_AA);
+}
+
+void Houghline_Detector::add_left_sample(uint16_t new_sample)
+{
+  left_samples_.push_back(new_sample);
+  if (left_samples_.size() > size::MAX_SAMPLING_SIZE)
+  {
+    left_samples_.pop_front();
+  }
+}
+
+void Houghline_Detector::add_right_sample(uint16_t new_sample)
+{
+  right_samples_.push_back(new_sample);
+  if (right_samples_.size() > size::MAX_SAMPLING_SIZE)
+  {
+    right_samples_.pop_front();
+  }
+}
+
+void Houghline_Detector::get_left_weighted_mean()
+{
+  uint32_t sum = 0;
+  uint16_t total_num = 0;
+  if (left_samples_.size() > 0)
+  {
+    for (uint32_t i = 0U; i < left_samples_.size(); ++i)
+    {
+      sum += static_cast<uint32_t>(left_samples_[i] * weights_[i]);
+      total_num += weights_[i];
+    }
+    left_mean_ = static_cast<float>(sum) / static_cast<float>(total_num);
+  }
+  else
+  {
+    left_mean_ = 0.0F;
+  }
+}
+
+void Houghline_Detector::get_right_weighted_mean()
+{
+  uint32_t sum = 0;
+  uint16_t total_num = 0;
+  if (right_samples_.size() > 0)
+  {
+    for (uint32_t i = 0U; i < right_samples_.size(); ++i)
+    {
+      sum += static_cast<uint32_t>(right_samples_[i] * weights_[i]);
+      total_num += weights_[i];
+    }
+    right_mean_ = static_cast<float>(sum) / static_cast<float>(total_num);
+  }
+  else
+  {
+    right_mean_ = static_cast<float>(frame::WIDTH);
+  }
 }
