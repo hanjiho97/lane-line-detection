@@ -1,7 +1,7 @@
 #include <string>
 #include <fstream>
 #include "opencv2/opencv.hpp"
-#include "houghlines.h"
+#include "lane_detection/houghlines_detector.hpp"
 
 
 int32_t main(int32_t argc, char** argv)
@@ -19,8 +19,8 @@ int32_t main(int32_t argc, char** argv)
     cv::Mat input_frame;
     cv::Mat output_frame;
     LinePositions lane;
-    cv::namedWindow("frame");
-    while(true)
+    cv::namedWindow("input_frame");
+    while (true)
     {
         if (!cap.read(input_frame))
         {
@@ -34,13 +34,13 @@ int32_t main(int32_t argc, char** argv)
         current_line.second = lane.right_line_position;
         lines.push_back(current_line);
         imshow("input_frame", input_frame);
-        waitKey(1);
+        cv::waitKey(1);
     }
-    ofstream outfile;
-    outfile.open("data.csv", ios::out);
-    for (uint32_t j = 0; j < line.size(); ++j)
+    std::ofstream outfile;
+    outfile.open("data.csv", std::ios::out);
+    for (uint32_t j = 0; j < lines.size(); ++j)
     {
-        outfile << line[j].first << "," << line[j].second << std::endl;
+        outfile << lines[j].first << "," << lines[j].second << std::endl;
     }
     outfile.close();
     return 0;
