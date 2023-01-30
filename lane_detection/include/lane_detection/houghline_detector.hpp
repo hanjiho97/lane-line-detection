@@ -18,4 +18,4 @@ public:
 	void ProcessImage(const cv::Mat& frame, int pos[]);
 private:
 	int pre_left = 0, pre_right = WIDTH;
-}; 
+};

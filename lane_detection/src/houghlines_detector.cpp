@@ -1,4 +1,5 @@
-#include "opencv2/opencv.hpp"
+#include <cmath>
+#include <vector>
 #include "houghlines.h"
 
 
@@ -31,12 +32,12 @@ void Houghline::DivideLeftRight(const Line& all_lines, Line& left_lines, Line& r
         x1 = new_line[0], x2 = new_line[2];
         y1 = new_line[1], y2 = new_line[3];
         float x_mean = float(x1 + x2) / 2;
-        if (slope < 0 && x2 < WIDTH / 2 && 
+        if (slope < 0 && x2 < WIDTH / 2 &&
             (abs(pre_left - x_mean) < 20 || pre_left == 0))
         {
             left_lines.push_back(new_line);
         }
-        else if (slope > 0 && x1 > WIDTH / 2 && 
+        else if (slope > 0 && x1 > WIDTH / 2 &&
             (abs(pre_right - x_mean) < 20 || pre_right == WIDTH))
         {
             right_lines.push_back(new_line);
@@ -54,7 +55,7 @@ void Houghline::GetLineParams(const Line& lines, float& m, float& b) {
         return;
     }
     for (auto& line : lines) {
-        x1 = line[0], x2 = line[2]; 
+        x1 = line[0], x2 = line[2];
         y1 = line[1], y2 = line[3];
         x_sum += x1 + x2;
         y_sum += y1 + y2;
@@ -130,12 +131,12 @@ void Houghline::ProcessImage(const cv::Mat& frame, int pos[]) {
     int left_pos = 0, right_pos = WIDTH;
     GetLinePosition(left_lines, true, left_x1, left_x2, left_pos);
     GetLinePosition(right_lines, false, right_x1, right_x2, right_pos);
-    // Â÷¼±
-    line(frame, 
+    // ï¿½ï¿½ï¿½ï¿½
+    line(frame,
         cv::Point(int(left_x1), HEIGHT),
         cv::Point(int(left_x2), (HEIGHT / 2)),
         cv::Scalar(255, 0, 0), 3);
-    line(frame, 
+    line(frame,
         cv::Point(int(right_x1), HEIGHT),
         cv::Point(int(right_x2), (HEIGHT / 2)),
         cv::Scalar(255, 0, 0), 3);
