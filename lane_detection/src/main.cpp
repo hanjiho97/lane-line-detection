@@ -1,6 +1,5 @@
 #include <string>
 #include <fstream>
-#include "opencv2/opencv.hpp"
 #include "lane_detection/houghlines_detector.hpp"
 
 int32_t main(int32_t argc, char** argv)
