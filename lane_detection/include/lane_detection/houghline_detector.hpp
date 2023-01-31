@@ -1,5 +1,5 @@
 #ifndef LANE_DETECTION_HOUGHLINE_DETECTOR_HPP_
-#define LANE_EDETECTION_HOUGHLINE_DETECTOR_HPP_
+#define LANE_DETECTION_HOUGHLINE_DETECTOR_HPP_
 #include <cmath>
 #include <deque>
 #include <vector>
